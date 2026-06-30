@@ -2,6 +2,24 @@ def resolver_selos(valor: int, denominacoes: list[int]):
     
     INF = float('inf')
 
+    if not isinstance(valor, int) or valor <= 0:
+        return {
+            'possivel': False,
+            'minimo': None,
+            'combinacao': [],
+            'denominacoes': [],
+            'erro': 'O valor de selagem precisa ser um número inteiro maior que zero.',
+        }
+
+    if not denominacoes or any(not isinstance(d, int) or d <= 0 for d in denominacoes):
+        return {
+            'possivel': False,
+            'minimo': None,
+            'combinacao': [],
+            'denominacoes': [],
+            'erro': 'As denominações precisam ser números inteiros positivos.',
+        }
+
     dp = [INF] * (valor + 1)
     dp[0] = 0
 
@@ -19,6 +37,7 @@ def resolver_selos(valor: int, denominacoes: list[int]):
             'minimo': None,
             'combinacao': [],
             'denominacoes': sorted(denominacoes),
+            'erro': None,
         }
 
     combinacao = []
@@ -33,4 +52,5 @@ def resolver_selos(valor: int, denominacoes: list[int]):
         'minimo': dp[valor],
         'combinacao': sorted(combinacao, reverse=True),
         'denominacoes': sorted(denominacoes),
+        'erro': None,
     }
