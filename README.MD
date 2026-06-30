@@ -115,7 +115,16 @@ Retorna um JSON com a mesma estrutura da função `resolver_selos`:
 
 ## Vídeo de Apresentação
 
-Ainda não adicionado.
+<p align="center">
+  Neste vídeo, apresentamos os trabalhos desenvolvidos, abordando os principais conceitos aplicados ao longo do projeto, e seus funcionamentos.
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/QakvYWxGoss?si=L50LptDZPN3ZDMgu">
+    ▶ Assista no YouTube
+  </a>
+</p>
+
 
 ## Outros
 
