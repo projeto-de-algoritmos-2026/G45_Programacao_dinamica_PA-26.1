@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selos Mínimos</title>
+    <style>
+        :root {
+            --cyan: #00A8A8;
+            --pink: #E12885;
+            --dark: #1a1a1a;
+            --card: #2c2c2c;
+            --white: #f0f0f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a, #002b2b);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--white);
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+        .card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 0 20px rgba(0,168,168,0.2), 0 10px 30px rgba(0,0,0,0.6);
+            border: 1px solid var(--cyan);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 1.8rem;
+            color: var(--cyan);
+            letter-spacing: 1px;
+        }
+        .form-group {
+            margin-bottom: 1.3rem;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: var(--cyan);
+        }
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan);
+        }
+        .btn {
+            width: 100%;
+            padding: 0.9rem;
+            background: var(--pink);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+        .btn:hover {
+            background: #ff3b8b;
+        }
+        .results {
+            display: none;
+            margin-top: 1.8rem;
+            background: rgba(0,168,168,0.05);
+            border: 1px solid var(--cyan);
+            border-radius: 12px;
+            padding: 1.2rem;
+        }
+        .results.error {
+            border-color: var(--pink);
+            background: rgba(225,40,133,0.1);
+        }
+        .results h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--cyan);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .close-btn:hover { color: var(--pink); }
+        .result-item {
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            font-weight: 700;
+            margin: 0.2rem;
+            background: var(--cyan);
+            color: #000;
+        }
+        .stamp-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>✉️ Selos Mínimos</h1>
+
+            <div class="form-group">
+                <label for="valor">Valor a selar (centavos)</label>
+                <input type="number" id="valor" placeholder="Ex: 28" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="denominacoes">Selos disponíveis (centavos)</label>
+                <input type="text" id="denominacoes" placeholder="Ex: 1, 5, 11" required>
+                <small style="color:#aaa;">Separe os valores por vírgula</small>
+            </div>
+
+            <button class="btn" id="btnCalcular">Calcular Combinação Mínima</button>
+
+            <div id="results" class="results">
+                <button class="close-btn" id="btnCloseResults">&times;</button>
+                <h2 id="resultsTitle"></h2>
+                <div id="resultsBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const backendBase = '/api';
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"]+/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+        }
+
+        function showResults(title, html, isError = false) {
+            const res = document.getElementById('results');
+            document.getElementById('resultsTitle').textContent = title;
+            document.getElementById('resultsBody').innerHTML = html;
+            res.classList.toggle('error', isError);
+            res.style.display = 'block';
+        }
+
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+        }
+
+        async function calcularSelos() {
+            const valorInput = document.getElementById('valor');
+            const denomInput = document.getElementById('denominacoes');
+            const valor = valorInput.value.trim();
+            const denom = denomInput.value.trim();
+
+            if (!valor || !denom) {
+                alert('Preencha todos os campos.');
+                return;
+            }
+
+            showResults('Calculando...', '<p>Processando...</p>');
+
+            try {
+                const resp = await fetch(`${backendBase}/solve?valor=${encodeURIComponent(valor)}&denominacoes=${encodeURIComponent(denom)}`);
+                if (!resp.ok) {
+                    const errData = await resp.json().catch(() => null);
+                    throw new Error(errData?.erro || 'Erro na requisição');
+                }
+                const data = await resp.json();
+
+                if (data.erro) {
+                    showResults('Erro', `<p>${escapeHtml(data.erro)}</p>`, true);
+                    return;
+                }
+
+                if (!data.possivel) {
+                    showResults('Impossível', '<p>Não é possível formar esse valor com os selos fornecidos.</p>', true);
+                    return;
+                }
+
+                let html = `<div class="result-item"><span>Quantidade mínima de selos:</span> <strong style="color:var(--cyan); font-size:1.2rem;">${data.minimo}</strong></div>`;
+                html += '<div class="result-item"><span>Combinação usada:</span></div>';
+                html += '<div class="stamp-list">';
+                data.combinacao.forEach(s => {
+                    html += `<span class="badge">${s}¢</span>`;
+                });
+                html += '</div>';
+
+                showResults('Resultado', html);
+            } catch (e) {
+                console.error(e);
+                showResults('Erro', `<p>${escapeHtml(e.message)}</p>`, true);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('btnCalcular').addEventListener('click', calcularSelos);
+            document.getElementById('btnCloseResults').addEventListener('click', hideResults);
+        });
+    </script>
+</body>
+</html>
